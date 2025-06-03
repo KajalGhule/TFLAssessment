@@ -1,7 +1,7 @@
  -- Active: 1707123530557@@127.0.0.1@3306@assessmentdb
 
 -- get candidate test results
-use assessmentdb;
+
 drop procedure if exists spcandidatetestresult;
 
 DELIMITER $$
@@ -20,7 +20,6 @@ END $$
 
 call spcandidatetestresult(2,1,@pscore) ;
 select(@pscore);
-
 
 DROP PROCEDURE IF EXISTS spinterviewdetails;
 
@@ -65,7 +64,7 @@ END $$
 DELIMITER ;
 
 -- Call the procedure by passing a dynamic interview ID
-CALL spinterviewdetails(1);
+CALL spinterviewdetails(5);
 
 DROP PROCEDURE IF Exists spcandidatetestresultdetails;
 
@@ -74,8 +73,18 @@ create procedure spcandidatetestresultdetails(IN pcandidateId INT, IN ptestId IN
 BEGIN
 DECLARE totalQuestions INT;
 DECLARE correctCandidateAnswers INT;
+DECLARE attendedCount INT;
 
-select count(*) INTO totalQuestions from testquestions where testid=1;
+ SELECT COUNT(*) INTO attendedCount
+    FROM candidateanswers
+    INNER JOIN testquestions ON testquestions.questionbankid = candidateanswers.testquestionid
+    WHERE candidateanswers.candidateid = pcandidateId 
+      AND testquestions.testid = ptestId;
+	IF attendedCount = 0 THEN
+        SELECT 'Candidate has not attended the test.' AS message;
+    ELSE
+    
+select count(*) INTO totalQuestions from testquestions where testid=ptestId;
 
 SELECT COUNT(CASE WHEN candidateanswers.answerkey = questionbank.answerkey THEN 1 ELSE NULL END) AS score 
 INTO correctCandidateAnswers FROM candidateanswers 
